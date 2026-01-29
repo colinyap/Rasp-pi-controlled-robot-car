@@ -1,12 +1,8 @@
-# Import Raspberry Pi GPIO library to control GPIO pins
 import RPi.GPIO as GPIO
-
-# Import time library for delays
 import time
 
 # Disable GPIO warnings (useful when re-running the script)
 GPIO.setwarnings(False)
-
 # Use BCM pin numbering (GPIO numbers, not physical pin numbers)
 GPIO.setmode(GPIO.BCM)
 
@@ -17,9 +13,6 @@ IN1 = 15   # Motor A direction pin 1
 IN2 = 18   # Motor A direction pin 2
 IN3 = 2    # Motor B direction pin 1
 IN4 = 3    # Motor B direction pin 2
-
-# Set default duty cycle (motor speed percentage)
-Duty_cycle = 100
 
 # Variables used for timing-based movement calibration
 Duty_cycle_angle = 0   # Used for turning (degrees per second)
@@ -36,19 +29,51 @@ GPIO.setup(IN3, GPIO.OUT)
 GPIO.setup(IN4, GPIO.OUT)
 GPIO.setup(ENB, GPIO.OUT)
 
-# Match-case structure to calibrate speed and turning based on duty cycle
+#=============================================================
+#Setup for Duty cycle values
+#=============================================================
+
+#Prompt the user to input the desired Duty cycle, repeats the prompt should the user enter an invalid value999
+while True:
+    try:
+        Prompt_Duty_cycle = input("Enter duty cycle: ")
+        Duty_cycle = int(Prompt_Duty_cycle)
+        if Duty_cycle != 100 and Duty_cycle != 75 and Duty_cycle != 50:
+            print("Invalid value, Valid options are 100, 75, and 50, Please try again")
+            time.sleep(2)
+        else:
+                break
+    except ValueError:
+        print("invalid Character Detected, only numbers are accepted as valid inputs, please try again")
+        time.sleep(2)
+   
+
 match Duty_cycle:
     case 100:
-        Duty_cycle_angle = 207  # Turning calibration for 100% speed
-        Duty_cycle_speed = 59   # Forward speed calibration for 100%
+        Duty_cycle_angle = 215  # Turning calibration for 100% speed
+        Duty_cycle_speed = 62   # Forward speed calibration for 100%
     
     case 75:
-        Duty_cycle_angle = 131  # Turning calibration for 75% speed
+        Duty_cycle_angle = 135  # Turning calibration for 75% speed
         Duty_cycle_speed = 44   # Forward speed calibration for 75%
         
     case 50:
-        Duty_cycle_angle = 68   # Turning calibration for 50% speed
+        Duty_cycle_angle = 74   # Turning calibration for 50% speed
         Duty_cycle_speed = 31   # Forward speed calibration for 50%
+        
+        
+#=========================================================================
+# Movement Controls
+#=========================================================================
+        
+        
+# Create PWM object for Motor A enable pin
+pwm1 = GPIO.PWM(ENA, PWM_frequency)
+pwm1.start(Duty_cycle)  # Start PWM with specified duty cycle
+
+# Create PWM object for Motor B enable pin
+pwm2 = GPIO.PWM(ENB, PWM_frequency)
+pwm2.start(Duty_cycle)
 
 # Function to move the robot straight forward
 # distance: distance to move (units based on calibration)
@@ -91,17 +116,3 @@ def stop(seconds):
     GPIO.output(IN3, False)  # Stop Motor B
     GPIO.output(IN4, False)
     time.sleep(seconds)
-
-# Create PWM object for Motor A enable pin
-pwm1 = GPIO.PWM(ENA, PWM_frequency)
-pwm1.start(Duty_cycle)  # Start PWM with specified duty cycle
-
-# Create PWM object for Motor B enable pin
-pwm2 = GPIO.PWM(ENB, PWM_frequency)
-pwm2.start(Duty_cycle)
-
-# Move the robot straight for a distance of 1 (calibrated unit)
-gostraight(1)
-
-# Stop the robot for 2 seconds
-stop(2)

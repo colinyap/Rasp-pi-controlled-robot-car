@@ -1,28 +1,28 @@
-import RPi.GPIO as GPIO
-from picamera2 import Picamera2, Preview
+import cv2
+import picamera2
+import numpy as np
+from picamera2 import Picamera2
 import time
-
-GPIO.setwarnings(False)
-# Create a Picamera2 object
+ 
+# Initialize video capture
 picam2 = Picamera2()
-
-# Create a configuration suitable for still images
-config = picam2.create_preview_configuration()
-picam2.configure(config)
-
-# Start the camera and preview (preview will appear in a separate window)
-picam2.start_preview(Preview.QT)
+picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (640, 480)}))
 picam2.start()
 
+while True:
+    frame = picam2.capture_array()
+    
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) #Convert to grayscale
 
+    
+    _, bw = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY) #Prints out a pure black and white image based on the min and max threshold
 
-picam2.capture_file("test_photo.jpg")
-
-
-try:
-    while True:
-        time.sleep(1)
-except KeyboardInterrupt:
-    pass
-finally:
-    picam2.stop()
+    cv2.imshow("BW", bw) #Creates a preview window for the mask 
+    cv2.imshow("Frame", frame) #Creates a preview window for the normal camera feed for comparison
+    if cv2.waitKey(1) & 0xff ==ord('q'): #Exits the loop when the letter q is pressed
+        break
+ 
+ 
+# Clean up
+picam2.stop
+cv2.destroyAllWindows()
